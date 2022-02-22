@@ -1,0 +1,182 @@
+service: lambda-test-service
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  region: us-east-1
+  profile: mylocal
+  stackName: custom-local-stack-dev-grigor
+  stage: Grigor
+  environment:
+    TOKEN_SECRET_KEY: 'TOKEN_SECRET_KEY'
+
+
+  iamRoleStatements:
+    - Effect: Allow
+      Resource: '*'
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+    - Effect: Allow
+      Resource: '*'
+      Action:
+        - lambda:InvokeFunction
+
+
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: UsersTable
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: metadata
+            AttributeType: S
+          - AttributeName: username
+            AttributeType: S
+          - AttributeName: carName
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+          - AttributeName: metadata
+            KeyType: RANGE
+        ProvisionedThroughput:
+          WriteCapacityUnits: 1
+          ReadCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName:  GSI_USERNAME
+            KeySchema:
+              - AttributeName: username
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+          - IndexName: GSI_CARNAME
+            KeySchema:
+                - AttributeName: carName
+                  KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+
+
+package:
+  exclude:
+    - .idea/**
+    - lambda/package-lock.json
+
+
+functions:
+  # User registration
+  create_user:
+    handler: lambda/handler.registerUser
+    events:
+      - http:
+          path: registration
+          method: post
+
+  # User login
+  login_user:
+    handler: lambda/handler.loginUser
+    events:
+      - http:
+          path: login
+          method: post
+
+
+  # Get All Users
+  get_users:
+    handler: lambda/handler.getUsers
+    events:
+      - http:
+          path: users
+          method: get
+
+  # Get User By Id
+  get_user:
+    handler: lambda/handler.getUser
+    events:
+      - http:
+          path: user/{id}
+          method: get
+
+
+  # Remove User By Id
+  remove_user:
+    handler: lambda/handler.removeUser
+    events:
+      - http:
+          path: user
+          method: delete
+
+
+  # Update User By Id
+  update_user:
+    handler: lambda/handler.updateUser
+    events:
+      - http:
+          path: user
+          method: put
+
+
+
+  # Get All Cars
+  get_cars:
+    handler: lambda/handler.getCars
+    events:
+      - http:
+          path: cars
+          method: get
+
+  # Get Car By Car Id
+  get_car:
+    handler: lambda/handler.getCar
+    events:
+      - http:
+          path: car/{carId}
+          method: get
+
+  # Get User All Cars
+  get_user_cars:
+    handler: lambda/handler.getUserCars
+    events:
+      - http:
+          path: cars/user
+          method: get
+
+  # Create Car
+  create_car:
+    handler: lambda/handler.createCar
+    events:
+      - http:
+          path: car
+          method: post
+
+
+  # Update Car By Id
+  update_car:
+    handler: lambda/handler.updateCar
+    events:
+      - http:
+          path: car
+          method: put
+
+  # Remove Car By Id
+  remove_car:
+    handler: lambda/handler.removeCar
+    events:
+      - http:
+          path: car
+          method: delete
