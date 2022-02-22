@@ -9,6 +9,10 @@ provider:
   stage: Grigor
   environment:
     TOKEN_SECRET_KEY: 'TOKEN_SECRET_KEY'
+    REGION: 'us-east-1'
+    USER_TABLE: 'UsersTable'
+    GSI_USERNAME: 'GSI_USERNAME'
+    GSI_CARNAME: 'GSI_CARNAME'
 
 
   iamRoleStatements:
