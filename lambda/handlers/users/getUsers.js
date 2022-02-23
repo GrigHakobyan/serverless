@@ -15,7 +15,11 @@ module.exports.getUsers = async (event) => {
         const usersParams = {
             TableName: USER_TABLE,
             Limit: 25,
-            AttributesToGet: ['userId', 'username', 'email']
+            FilterExpression: 'begins_with(metadata, :user)',
+            ProjectionExpression: ['userId', 'username', 'email'],
+            ExpressionAttributeValues: {
+                ':user': 'USER'
+            }
         }
 
         const users = await scanTable(usersParams)

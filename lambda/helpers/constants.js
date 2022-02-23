@@ -5,6 +5,8 @@ const {
     GSI_CARNAME
 } = process.env
 
+
+
 module.exports = {
     REGION,
     USER_TABLE,

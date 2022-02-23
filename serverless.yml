@@ -3,16 +3,17 @@ service: lambda-test-service
 provider:
   name: aws
   runtime: nodejs14.x
-  region: us-east-1
-  profile: mylocal
+  region: eu-central-1
+  profile: softshark_local
   stackName: custom-local-stack-dev-grigor
   stage: Grigor
   environment:
     TOKEN_SECRET_KEY: 'TOKEN_SECRET_KEY'
-    REGION: 'us-east-1'
+    REGION: 'eu-central-1'
     USER_TABLE: 'UsersTable'
     GSI_USERNAME: 'GSI_USERNAME'
     GSI_CARNAME: 'GSI_CARNAME'
+
 
 
   iamRoleStatements:
