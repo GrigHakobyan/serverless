@@ -1,7 +1,7 @@
 const { v4 } = require( 'uuid')
 
 const {response} = require("../../helpers/response");
-const {authMiddleware} = require("../../middlewares/authMiddleware");
+
 const {GSI_CARNAME, USER_TABLE} = require("../../helpers/constants");
 const {parseBodyToJSON} = require("../../helpers/parseBodyToJSON");
 const {queryTable, putItem, updateItem} = require("../../dbfunctions");
@@ -9,7 +9,7 @@ const {queryTable, putItem, updateItem} = require("../../dbfunctions");
 
 module.exports.createCar = async (event) => {
     try {
-        const {id} = await authMiddleware(event.headers)
+        const {id} = event.requestContext.authorizer
 
         if(!id) {
             throw new Error('Invalid request')

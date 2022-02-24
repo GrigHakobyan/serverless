@@ -4,13 +4,13 @@ const {response} = require("../../helpers/response");
 const {parseBodyToJSON} = require("../../helpers/parseBodyToJSON");
 const {USER_TABLE, GSI_USERNAME} = require("../../helpers/constants");
 const {updateItem, queryTable} = require("../../dbfunctions");
-const {authMiddleware} = require("../../middlewares/authMiddleware");
+
 
 
 module.exports.updateUser = async (event) => {
     try {
 
-        const {id} = await authMiddleware(event.headers)
+        const {id} = event.requestContext.authorizer
 
         if(!id) {
             throw new Error('Invalid request')

@@ -1,12 +1,12 @@
 const {response} = require("../../helpers/response");
-const {authMiddleware} = require("../../middlewares/authMiddleware");
+
 const {scanTable} = require("../../dbfunctions");
 const {USER_TABLE} = require("../../helpers/constants");
 
 
 module.exports.getCar = async (event) => {
     try {
-        const {id} = await authMiddleware(event.headers)
+        const {id} = event.requestContext.authorizer
 
         if(!id) {
             throw new Error('Invalid request')

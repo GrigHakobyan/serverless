@@ -3,18 +3,15 @@ service: lambda-test-service
 provider:
   name: aws
   runtime: nodejs14.x
-  region: eu-central-1
+  region: ${env:AWS_DEFAULT_REGION ,'eu-central-1'}
   profile: softshark_local
   stackName: custom-local-stack-dev-grigor
-  stage: Grigor
+  stage: ${opt:stage, 'dev'}
   environment:
-    TOKEN_SECRET_KEY: 'TOKEN_SECRET_KEY'
-    REGION: 'eu-central-1'
-    USER_TABLE: 'UsersTable'
-    GSI_USERNAME: 'GSI_USERNAME'
-    GSI_CARNAME: 'GSI_CARNAME'
-
-
+    TOKEN_SECRET_KEY: ${ssm:/${self:stage}/TOKEN_SECRET_KEY}
+    USER_TABLE: !Ref UsersTable
+    GSI_USERNAME: ${self:custom.dynamoDB.UsersTableGSINames.GSIUsername}
+    GSI_CARNAME: ${self:custom.dynamoDB.UsersTableGSINames.GSICarname}
 
   iamRoleStatements:
     - Effect: Allow
@@ -26,19 +23,22 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-    - Effect: Allow
-      Resource: '*'
-      Action:
         - lambda:InvokeFunction
+        - ssm:GetParameter
 
 
+custom:
+  dynamoDB:
+    UsersTableGSINames:
+      GSIUsername: GSI_USERNAME
+      GSICarname: GSI_CARNAME
 
 resources:
   Resources:
     UsersTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: UsersTable
+        TableName: ${self:service}-UsersTable-${self:provider.stage}
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
@@ -57,7 +57,7 @@ resources:
           WriteCapacityUnits: 1
           ReadCapacityUnits: 1
         GlobalSecondaryIndexes:
-          - IndexName:  GSI_USERNAME
+          - IndexName:  ${self:custom.dynamoDB.UsersTableGSINames.GSIUsername}
             KeySchema:
               - AttributeName: username
                 KeyType: HASH
@@ -66,7 +66,7 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
-          - IndexName: GSI_CARNAME
+          - IndexName: ${self:custom.dynamoDB.UsersTableGSINames.GSICarname}
             KeySchema:
                 - AttributeName: carName
                   KeyType: HASH
@@ -84,6 +84,11 @@ package:
 
 
 functions:
+  # Authorizer
+  authorizer:
+    handler: lambda/handler.auth
+
+
   # User registration
   create_user:
     handler: lambda/handler.registerUser
@@ -91,6 +96,11 @@ functions:
       - http:
           path: registration
           method: post
+          cors:
+            origins: '*'
+            headers:
+              - '*'
+
 
   # User login
   login_user:
@@ -99,6 +109,10 @@ functions:
       - http:
           path: login
           method: post
+          cors:
+            origins: '*'
+            headers:
+              - '*'
 
 
   # Get All Users
@@ -108,6 +122,12 @@ functions:
       - http:
           path: users
           method: get
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
 
   # Get User By Id
   get_user:
@@ -116,6 +136,12 @@ functions:
       - http:
           path: user/{id}
           method: get
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
 
 
   # Remove User By Id
@@ -125,6 +151,12 @@ functions:
       - http:
           path: user
           method: delete
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
 
 
   # Update User By Id
@@ -134,8 +166,12 @@ functions:
       - http:
           path: user
           method: put
-
-
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
 
   # Get All Cars
   get_cars:
@@ -144,6 +180,13 @@ functions:
       - http:
           path: cars
           method: get
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
+
 
   # Get Car By Car Id
   get_car:
@@ -152,6 +195,13 @@ functions:
       - http:
           path: car/{carId}
           method: get
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
+
 
   # Get User All Cars
   get_user_cars:
@@ -160,6 +210,12 @@ functions:
       - http:
           path: cars/user
           method: get
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
 
   # Create Car
   create_car:
@@ -168,6 +224,13 @@ functions:
       - http:
           path: car
           method: post
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
+
 
 
   # Update Car By Id
@@ -177,6 +240,12 @@ functions:
       - http:
           path: car
           method: put
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
 
   # Remove Car By Id
   remove_car:
@@ -185,3 +254,9 @@ functions:
       - http:
           path: car
           method: delete
+          authorizer:
+            name: authorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'

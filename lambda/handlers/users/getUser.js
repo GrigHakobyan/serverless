@@ -1,14 +1,14 @@
 const {response} = require("../../helpers/response");
 const {USER_TABLE} = require("../../helpers/constants");
 const {queryTable} = require("../../dbfunctions");
-const {authMiddleware} = require("../../middlewares/authMiddleware");
+
 
 module.exports.getUser = async (event) => {
     try {
 
         const id = event.pathParameters?.id
 
-        const {id: userId} = await authMiddleware(event.headers)
+        const {id: userId} = event.requestContext.authorizer
 
         if(!userId) {
             throw new Error('Invalid request')
