@@ -12,7 +12,9 @@ module.exports.response = (statusCode, body) => {
     if(error)
         return {
             statusCode,
-            body: JSON.stringify(error),
+            body: JSON.stringify({
+                error
+            }),
             ...config,
             ...otherParams
         }

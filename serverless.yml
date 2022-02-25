@@ -1,14 +1,17 @@
 service: lambda-test-service
 
+variablesResolutionMode: 20210326
+
 provider:
   name: aws
   runtime: nodejs14.x
+  lambdaHashingVersion: 20201221
   region: ${env:AWS_DEFAULT_REGION ,'eu-central-1'}
   profile: softshark_local
   stackName: custom-local-stack-dev-grigor
   stage: ${opt:stage, 'dev'}
   environment:
-    TOKEN_SECRET_KEY: ${ssm:/${self:stage}/TOKEN_SECRET_KEY}
+    TOKEN_SECRET_KEY: ${ssm:/${self:provider.stage}/TOKEN_SECRET_KEY_2}
     USER_TABLE: !Ref UsersTable
     GSI_USERNAME: ${self:custom.dynamoDB.UsersTableGSINames.GSIUsername}
     GSI_CARNAME: ${self:custom.dynamoDB.UsersTableGSINames.GSICarname}
@@ -89,7 +92,23 @@ functions:
     handler: lambda/handler.auth
 
 
-  # User registration
+  check_token:
+    handler: lambda/handler.check
+    events:
+      - http:
+          path: check
+          method: get
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
+          cors:
+            origins: '*'
+            headers:
+              - '*'
+
+
+
+      # User registration
   create_user:
     handler: lambda/handler.registerUser
     events:
@@ -100,6 +119,7 @@ functions:
             origins: '*'
             headers:
               - '*'
+
 
 
   # User login
@@ -124,6 +144,7 @@ functions:
           method: get
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -138,6 +159,7 @@ functions:
           method: get
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -153,6 +175,7 @@ functions:
           method: delete
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -168,6 +191,21 @@ functions:
           method: put
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
+          cors:
+            origins: '*'
+            headers:
+              - '*'
+
+  get_user_profile:
+    handler: lambda/handler.userProfile
+    events:
+      - http:
+          path: profile
+          method: get
+          authorizer:
+            name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -182,6 +220,7 @@ functions:
           method: get
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -197,6 +236,7 @@ functions:
           method: get
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -212,6 +252,7 @@ functions:
           method: get
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -226,6 +267,7 @@ functions:
           method: post
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -242,6 +284,7 @@ functions:
           method: put
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:
@@ -256,6 +299,7 @@ functions:
           method: delete
           authorizer:
             name: authorizer
+            resultTtlInSeconds: 0
           cors:
             origins: '*'
             headers:

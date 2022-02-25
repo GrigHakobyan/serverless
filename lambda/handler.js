@@ -1,6 +1,6 @@
-const {removeUser, loginUser,registerUser, updateUser, getUser, getUsers} = require('./handlers/users')
+const {removeUser, loginUser,registerUser, updateUser, getUser, getUsers, userProfile} = require('./handlers/users')
 const {getCar, getCars, createCar, getUserCars, updateCar, removeCar} = require('./handlers/cars')
-const {auth} = require('./handlers/authorization')
+const {auth, check} = require('./handlers/authorization')
 
 
 module.exports = {
@@ -11,6 +11,7 @@ module.exports = {
     updateUser,
     getUser,
     getUsers,
+    userProfile,
 
     // Car methods
     getCar,
@@ -21,6 +22,7 @@ module.exports = {
     removeCar,
 
     // Authorization methods
-    auth
+    auth,
+    check
 }
 
