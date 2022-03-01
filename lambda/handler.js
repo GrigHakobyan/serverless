@@ -1,5 +1,5 @@
 const { getUser, getUsers} = require('./handlers/users')
-const {getCar, getCars, createCar, getUserCars, updateCar, removeCar} = require('./handlers/cars')
+const {getCar, getCars, createCar, getUserCars, updateCar, removeCar, removeUserCars} = require('./handlers/cars')
 const {auth, check} = require('./handlers/authorization')
 
 
@@ -15,6 +15,7 @@ module.exports = {
     getUserCars,
     updateCar,
     removeCar,
+    removeUserCars,
 
     // Authorization methods
     auth,

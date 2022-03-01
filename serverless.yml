@@ -31,6 +31,7 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
+        - dynamodb:BatchWriteItem
         - lambda:InvokeFunction
         - ssm:GetParameter
         - cognito-idp:ListUsers
@@ -243,6 +244,20 @@ functions:
     events:
       - http:
           path: car
+          method: delete
+          authorizer:
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
+          cors:
+            origins: '*'
+            headers:
+              - '*'
+
+  remove_user_cars:
+    handler: lambda/handler.removeUserCars
+    events:
+      - http:
+          path: deleteCars
           method: delete
           authorizer:
             type: COGNITO_USER_POOLS

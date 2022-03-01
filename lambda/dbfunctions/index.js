@@ -28,3 +28,7 @@ module.exports.scanTable = async (params) => {
 module.exports.queryTable = async (params) => {
     return dynamo.query(params).promise()
 }
+
+module.exports.batchWriteItems = async (params) => {
+    return dynamo.batchWrite(params).promise()
+}

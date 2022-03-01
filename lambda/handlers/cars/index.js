@@ -4,6 +4,7 @@ const {createCar} = require('./createCar')
 const {getUserCars} = require('./getUserCars')
 const {updateCar} = require('./updateCar')
 const {removeCar} = require('./removeCar')
+const {removeUserCars} = require('./removeUserCars')
 
 module.exports = {
     getCars,
@@ -11,5 +12,6 @@ module.exports = {
     createCar,
     getUserCars,
     updateCar,
-    removeCar
+    removeCar,
+    removeUserCars
 }
