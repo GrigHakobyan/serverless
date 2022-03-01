@@ -5,11 +5,7 @@ const {USER_TABLE} = require("../../helpers/constants");
 const {deleteItem} = require("../../dbfunctions");
 module.exports.removeCar = async (event) => {
     try {
-        const {id} = event.requestContext.authorizer
-
-        if(!id) {
-            throw new Error('Invalid request id' + id)
-        }
+        const username = event.requestContext?.authorizer?.claims?.['cognito:username']
 
         const {carId} = parseBodyToJSON(event.body)
 
@@ -20,8 +16,8 @@ module.exports.removeCar = async (event) => {
         const params = {
             TableName: USER_TABLE,
             Key: {
-                userId: id,
-                metadata: `CAR#${carId}`
+                userId: username,
+                carId: carId
             },
             ReturnValues: 'ALL_OLD'
         }

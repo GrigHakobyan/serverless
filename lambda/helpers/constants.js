@@ -1,8 +1,8 @@
 const {
     REGION,
     USER_TABLE,
-    GSI_USERNAME,
-    GSI_CARNAME
+    GSI_CARNAME,
+    USER_POOL_ID
 } = process.env
 
 
@@ -10,6 +10,6 @@ const {
 module.exports = {
     REGION,
     USER_TABLE,
-    GSI_USERNAME,
-    GSI_CARNAME
+    GSI_CARNAME,
+    USER_POOL_ID
 }

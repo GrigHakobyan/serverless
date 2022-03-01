@@ -1,31 +1,20 @@
-const {USER_TABLE} = require( "../../helpers/constants");
-const {scanTable} = require( "../../dbfunctions");
+const {USER_POOL_ID} = require( "../../helpers/constants");
 const {response} = require( "../../helpers/response");
+const {cognito} = require("../../helpers/cognito");
 
 
 module.exports.getUsers = async (event) => {
     try {
-
-        const {id} = event.requestContext.authorizer
-
-        if(!id){
-            throw new Error('Invalid request')
-        }
-
         const usersParams = {
-            TableName: USER_TABLE,
-            Limit: 25,
-            FilterExpression: 'begins_with(metadata, :user)',
-            ProjectionExpression: ['userId', 'username', 'email'],
-            ExpressionAttributeValues: {
-                ':user': 'USER'
-            }
+            UserPoolId: USER_POOL_ID,
+            AttributesToGet: ['sub', 'email'],
+            Limit: 25
         }
 
-        const users = await scanTable(usersParams)
+        const users = await cognito.listUsers(usersParams).promise()
 
         return response(200, {
-            data: users.Items
+            data: users.Users
         })
 
     } catch (e) {

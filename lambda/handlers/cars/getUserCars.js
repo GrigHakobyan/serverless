@@ -5,18 +5,13 @@ const {queryTable} = require("../../dbfunctions");
 
 module.exports.getUserCars = async (event) => {
     try {
-        const {id} = event.requestContext.authorizer
-
-        if(!id) {
-            throw new Error('Invalid request')
-        }
+        const username = event.requestContext?.authorizer?.claims?.['cognito:username']
 
         const params = {
             TableName: USER_TABLE,
-            KeyConditionExpression: "userId = :userId AND begins_with(metadata, :car)",
+            KeyConditionExpression: "userId = :userId",
             ExpressionAttributeValues: {
-                ":userId": id,
-                ":car": "CAR"
+                ":userId": username
             },
             Limit: 25
         }
@@ -24,7 +19,7 @@ module.exports.getUserCars = async (event) => {
         const { Items } = await queryTable(params)
 
         const cars = Items.map(car => ({
-            id: car.metadata.split('#')[1],
+            id: car.carId,
             carName: car.carName,
             carModel: car.carModel
         }))

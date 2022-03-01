@@ -9,11 +9,7 @@ const {queryTable, putItem, updateItem} = require("../../dbfunctions");
 
 module.exports.createCar = async (event) => {
     try {
-        const {id} = event.requestContext.authorizer
-
-        if(!id) {
-            throw new Error('Invalid request')
-        }
+        const username = event.requestContext?.authorizer?.claims?.['cognito:username']
 
         const {carName, carModel} = parseBodyToJSON(event.body)
 
@@ -40,8 +36,8 @@ module.exports.createCar = async (event) => {
         const newCarParams = {
             TableName: USER_TABLE,
             Item: {
-                userId: id,
-                metadata: `CAR#${carId}`,
+                userId: username,
+                carId: carId,
                 carName: carName,
                 carModel: carModel
             }

@@ -6,20 +6,15 @@ const {USER_TABLE} = require("../../helpers/constants");
 
 module.exports.getCar = async (event) => {
     try {
-        const {id} = event.requestContext.authorizer
-
-        if(!id) {
-            throw new Error('Invalid request')
-        }
 
         const carId = event.pathParameters?.carId
 
 
         const params = {
             TableName: USER_TABLE,
-            FilterExpression: 'metadata =:car',
+            FilterExpression: 'carId =:carId',
             ExpressionAttributeValues: {
-                ':car': `CAR#${carId}`
+                ':carId': carId
             }
         }
 
@@ -29,7 +24,7 @@ module.exports.getCar = async (event) => {
 
         if(Count > 0) {
             car = {
-                id: Items[0].metadata.split('#')[1],
+                id: Items[0].carId,
                 carName: Items[0].carName,
                 carModel: Items[0].carModel
             }

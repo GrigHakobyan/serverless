@@ -10,11 +10,16 @@ provider:
   profile: softshark_local
   stackName: custom-local-stack-dev-grigor
   stage: ${opt:stage, 'dev'}
+  apiGateway:
+    restApiId: !Ref ServerlessWebRestApi
+    restApiRootResourceId: !GetAtt ServerlessWebRestApi.RootResourceId
+
   environment:
     TOKEN_SECRET_KEY: ${ssm:/${self:provider.stage}/TOKEN_SECRET_KEY_2}
     USER_TABLE: !Ref UsersTable
-    GSI_USERNAME: ${self:custom.dynamoDB.UsersTableGSINames.GSIUsername}
     GSI_CARNAME: ${self:custom.dynamoDB.UsersTableGSINames.GSICarname}
+    USER_POOL_ID: ${self:custom.dynamoDB.UsersTableGSINames.UserPoolId}
+
 
   iamRoleStatements:
     - Effect: Allow
@@ -28,13 +33,14 @@ provider:
         - dynamodb:DeleteItem
         - lambda:InvokeFunction
         - ssm:GetParameter
+        - cognito-idp:ListUsers
 
 
 custom:
   dynamoDB:
     UsersTableGSINames:
-      GSIUsername: GSI_USERNAME
       GSICarname: GSI_CARNAME
+      UserPoolId: 'eu-central-1_0657elRnn'
 
 resources:
   Resources:
@@ -45,30 +51,19 @@ resources:
         AttributeDefinitions:
           - AttributeName: userId
             AttributeType: S
-          - AttributeName: metadata
-            AttributeType: S
-          - AttributeName: username
+          - AttributeName: carId
             AttributeType: S
           - AttributeName: carName
             AttributeType: S
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
-          - AttributeName: metadata
+          - AttributeName: carId
             KeyType: RANGE
         ProvisionedThroughput:
           WriteCapacityUnits: 1
           ReadCapacityUnits: 1
         GlobalSecondaryIndexes:
-          - IndexName:  ${self:custom.dynamoDB.UsersTableGSINames.GSIUsername}
-            KeySchema:
-              - AttributeName: username
-                KeyType: HASH
-            Projection:
-              ProjectionType: ALL
-            ProvisionedThroughput:
-              ReadCapacityUnits: 1
-              WriteCapacityUnits: 1
           - IndexName: ${self:custom.dynamoDB.UsersTableGSINames.GSICarname}
             KeySchema:
                 - AttributeName: carName
@@ -79,6 +74,49 @@ resources:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
 
+    ServerlessWebRestApi:
+      Type: AWS::ApiGateway::RestApi
+      Properties:
+        Name: ${self:service}-rest-api-${self:provider.stage}
+
+    ServerlessApiGateWayAuthorizer:
+      Type: AWS::ApiGateway::Authorizer
+      Properties:
+        Name: ${self:service}-rest-api-authorizer-${self:provider.stage}
+        IdentitySource: method.request.header.Authorization
+        RestApiId: !Ref ServerlessWebRestApi
+        Type: COGNITO_USER_POOLS
+        ProviderARNs:
+          - Fn::GetAtt:
+              - CognitoUsersPool
+              - Arn
+
+
+    ServerlessApiGateWayUnauthorized:
+      Type: AWS::ApiGateway::GatewayResponse
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Credentials: "'true'"
+        ResponseType: UNAUTHORIZED
+        RestApiId: !Ref ServerlessWebRestApi
+
+    CognitoUsersPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${self:service}-Cognito-Users-Pool-${self:provider.stage}
+        UsernameAttributes:
+          - email
+    CognitoUsersPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${self:service}-Cognito-Users-Pool-Client-${self:provider.stage}
+        UserPoolId: !Ref CognitoUsersPool
+        ExplicitAuthFlows:
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_USER_SRP_AUTH
+        GenerateSecret: false
+
 
 package:
   exclude:
@@ -87,54 +125,6 @@ package:
 
 
 functions:
-  # Authorizer
-  authorizer:
-    handler: lambda/handler.auth
-
-
-  check_token:
-    handler: lambda/handler.check
-    events:
-      - http:
-          path: check
-          method: get
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-          cors:
-            origins: '*'
-            headers:
-              - '*'
-
-
-
-      # User registration
-  create_user:
-    handler: lambda/handler.registerUser
-    events:
-      - http:
-          path: registration
-          method: post
-          cors:
-            origins: '*'
-            headers:
-              - '*'
-
-
-
-  # User login
-  login_user:
-    handler: lambda/handler.loginUser
-    events:
-      - http:
-          path: login
-          method: post
-          cors:
-            origins: '*'
-            headers:
-              - '*'
-
-
   # Get All Users
   get_users:
     handler: lambda/handler.getUsers
@@ -143,12 +133,13 @@ functions:
           path: users
           method: get
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:
               - '*'
+
 
   # Get User By Id
   get_user:
@@ -158,58 +149,13 @@ functions:
           path: user/{id}
           method: get
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:
               - '*'
 
-
-  # Remove User By Id
-  remove_user:
-    handler: lambda/handler.removeUser
-    events:
-      - http:
-          path: user
-          method: delete
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-          cors:
-            origins: '*'
-            headers:
-              - '*'
-
-
-  # Update User By Id
-  update_user:
-    handler: lambda/handler.updateUser
-    events:
-      - http:
-          path: user
-          method: put
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-          cors:
-            origins: '*'
-            headers:
-              - '*'
-
-  get_user_profile:
-    handler: lambda/handler.userProfile
-    events:
-      - http:
-          path: profile
-          method: get
-          authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
-          cors:
-            origins: '*'
-            headers:
-              - '*'
 
   # Get All Cars
   get_cars:
@@ -219,8 +165,8 @@ functions:
           path: cars
           method: get
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:
@@ -235,8 +181,8 @@ functions:
           path: car/{carId}
           method: get
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:
@@ -251,8 +197,8 @@ functions:
           path: cars/user
           method: get
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:
@@ -266,8 +212,8 @@ functions:
           path: car
           method: post
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:
@@ -283,12 +229,13 @@ functions:
           path: car
           method: put
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:
               - '*'
+
 
   # Remove Car By Id
   remove_car:
@@ -298,8 +245,8 @@ functions:
           path: car
           method: delete
           authorizer:
-            name: authorizer
-            resultTtlInSeconds: 0
+            type: COGNITO_USER_POOLS
+            authorizerId: !Ref ServerlessApiGateWayAuthorizer
           cors:
             origins: '*'
             headers:

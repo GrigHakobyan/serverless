@@ -1,6 +1,7 @@
 const {response} = require("../../helpers/response");
-const {USER_TABLE} = require("../../helpers/constants");
+const {USER_TABLE, USER_POOL_ID} = require("../../helpers/constants");
 const {queryTable} = require("../../dbfunctions");
+const {cognito} = require("../../helpers/cognito");
 
 
 module.exports.getUser = async (event) => {
@@ -8,30 +9,19 @@ module.exports.getUser = async (event) => {
 
         const id = event.pathParameters?.id
 
-        const {id: userId} = event.requestContext.authorizer
-
-        if(!userId) {
-            throw new Error('Invalid request')
-        }
-
         const params = {
-            TableName: USER_TABLE,
-            KeyConditionExpression: "userId = :userId AND begins_with(metadata, :user)",
-            ExpressionAttributeValues: {
-                ':userId': id,
-                ':user': 'USER'
-            },
-            ProjectionExpression: ['userId', 'username', 'email']
+            UserPoolId: USER_POOL_ID,
+            Filter: `username = "${id}"`
         }
 
-        const user = await queryTable(params)
+        const user = await cognito.listUsers(params).promise()
 
-        if(!user.Count === 0) {
+        if(user.Users.length === 0) {
             throw new Error('User not found')
         }
 
         return response(200, {
-            data: user.Items[0]
+            data: user.Users[0]
         })
 
     } catch (e) {
