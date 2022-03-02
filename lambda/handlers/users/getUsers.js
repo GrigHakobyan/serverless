@@ -7,7 +7,6 @@ module.exports.getUsers = async (event) => {
     try {
         const usersParams = {
             UserPoolId: USER_POOL_ID,
-            AttributesToGet: ['sub', 'email'],
             Limit: 25
         }
 

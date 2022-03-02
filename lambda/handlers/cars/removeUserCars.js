@@ -9,7 +9,6 @@ module.exports.removeUserCars = async (event) => {
 
         const {carsId} = parseBodyToJSON(event.body)
 
-
         const deleteParams = {
             RequestItems: {}
         }
