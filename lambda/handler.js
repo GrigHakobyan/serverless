@@ -2,6 +2,8 @@ const { getUser, getUsers} = require('./handlers/users')
 const {getCar, getCars, createCar, getUserCars, updateCar, removeCar, removeUserCars} = require('./handlers/cars')
 const {auth, check} = require('./handlers/authorization')
 
+console.log(1)
+
 module.exports = {
     // User methods
     getUser,
